@@ -41,6 +41,7 @@ $solution = Get-DataverseRecord -Connection $connection -TableName "solution" -F
 if ($null -eq $solution){
     Write-Host "Solution" $solutionUniqueName "is not installed"
     Write-Host "##vso[task.setvariable variable=currentSolutionStatus;isoutput=true]NotInstalled"
+    Write-Host "##vso[task.setvariable variable=DeployAsUpgrade]false"
 }
 else{
     Write-Host "Solution" $solutionUniqueName "version" $solution.version "is installed"
