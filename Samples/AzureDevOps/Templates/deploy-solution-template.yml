@@ -1,0 +1,52 @@
+steps:
+  # Install the Power Platform Tools on the agent
+  - task: PowerPlatformToolInstaller@2
+    name: installPowerPlatformTools
+    displayName: Install Power Platform Tools
+    inputs:
+      DefaultVersion: false
+      AddToolsToPath: true
+
+  # Pick up the connection details from the Service Connection for later use
+  - task: PowerPlatformSetConnectionVariables@2
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '$(SPNServiceConnection)' 
+    name: setConnectionVariablesSP
+    displayName: Set Connection Variables for SP
+
+  # Sometimes username/password authentication might be required for things that don't support Service Principal authentication.
+  # So we have a seperate Service Connection pointing to the same DEV environment but using username/pasword authentication.
+  # Pick up the connection details from such a Service Connection for later use
+  - task: PowerPlatformSetConnectionVariables@2
+    inputs:
+      authenticationType: 'PowerPlatformEnvironment'
+      PowerPlatformEnvironment: '$(UsernamePasswordServiceConnection)'
+      ApplicationId: '$(ApplicationId)' 
+      RedirectUri: '$(RedirectUri)'
+    name: setConnectionVariables
+    displayName: Set Connection Variables  
+
+  # Check if the intention solution is already instead, and if so, what version    
+  - pwsh: "$(Pipeline.Workspace)/CI-Build/Scripts/IsSolutionInstalled.ps1 -serverURL '$(BuildTools.EnvironmentUrl)' -clientId '$(setConnectionVariablesSP.BuildTools.ApplicationId)' -clientSecret '$(setConnectionVariablesSP.BuildTools.ClientSecret)'  -solutionUniqueName '$(SolutionName)' -solutionFilePath '$(Pipeline.Workspace)/CI-Build/Solutions/$(SolutionName)_managed.zip'"
+    name: checkSolutionInstallationStatus
+    displayName: Check Solution Installation Status
+  
+  # Transform Deployment Settings file
+  - pwsh: "$(Pipeline.Workspace)/CI-Build/Scripts/TransformDeploymentSettingsFile.ps1 -settingsFilePath '$(Pipeline.Workspace)/CI-Build/Settings/$(SolutionName).json' -environmentVariablesValues '$(EnvironmentVariableValues)' -connectionTokens '$(ConnectionReferenceTokens)' -environmentId '$(EnvironmentID)' -username $(setConnectionVariables.BuildTools.UserName) -password $(setConnectionVariables.BuildTools.Password)"
+    name: transformDeploymentSettingsFile
+    displayName: Transform Deployment Settings File
+
+  - task: PowerPlatformImportSolution@2
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '$(SPNServiceConnection)'
+      SolutionInputFile: '$(Pipeline.Workspace)/CI-Build/Solutions/$(SolutionName)_managed.zip'
+      UseDeploymentSettingsFile: true
+      DeploymentSettingsFile: '$(Pipeline.Workspace)/CI-Build/Settings/$(SolutionName).json'
+      AsyncOperation: true
+      MaxAsyncWaitTime: '60'
+      StageAndUpgrade: $(DeployAsUpgrade)
+      OverwriteUnmanagedCustomizations: $(OverwriteUnmanagedCustomisations)
+      SkipLowerVersion: $(SkipLowerVersion)
+      PublishWorkflows: true

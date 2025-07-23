@@ -1,0 +1,45 @@
+name: $(Build.DefinitionName) $(Rev:rrrr)
+
+trigger: none
+
+variables:
+  - group: Generic Variables # This Variable Group will need creating in your Azure DevOps Project under Pipelines > Library. Remember also to grant the pipelines access to the Variable Groups and link them together
+
+resources:
+  pipelines:
+    - pipeline: 'CI-Build'
+      source: 'CI Build'
+
+stages:
+  - stage: deployToTEST
+    displayName: Deploy to TEST
+    jobs:
+    - deployment: deployToTEST
+      variables:
+        - group: TEST Environment Variables
+      pool:
+        vmImage: 'windows-latest'
+      displayName: "Deploy to TEST"
+      environment: 'TEST'
+      strategy:
+       runOnce:
+         deploy:
+          steps:
+          - template: ../Templates/deploy-solution-template.yml
+             
+  - stage: deployToPROD
+    dependsOn: deployToTEST
+    displayName: Deploy to PROD
+    jobs:
+    - deployment: deployToPROD
+      variables:
+        - group: PROD Environment Variables
+      pool:
+        vmImage: 'windows-latest'
+      displayName: "Deploy to PROD"
+      environment: 'PROD'
+      strategy:
+       runOnce:
+         deploy:
+          steps:
+          - template: ../Templates/deploy-solution-template.yml

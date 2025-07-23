@@ -1,0 +1,24 @@
+name: $(Build.DefinitionName) $(Rev:rrrr)
+
+trigger: none
+
+variables:
+  - group: Generic Variables # This Variable Group will need creating in your Azure DevOps Project under Pipelines > Library. Remember also to grant the pipelines access to the Variable Groups and link them together
+    
+
+stages:
+  - stage: exportUnpackAndCommitSolution
+    displayName: 'Export, Unpack and Commit Solution'
+    variables:
+    - ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      - group: 'DEV Environment Variables' # This Variable Group will need creating in your Azure DevOps Project under Pipelines > Library. Remember also to grant the pipelines access to the Variable Groups and link them together
+    - ${{ if eq(variables['Build.SourceBranchName'], 'hotfix') }}:
+      - group: 'HFXDEV Environment Variables' # This Variable Group will need creating in your Azure DevOps Project under Pipelines > Library. Remember also to grant the pipelines access to the Variable Groups and link them together
+    jobs:
+    - job: exportUnpackAndCommitSolution
+      pool:
+        vmImage: 'windows-latest'
+      displayName: 'Export, Unpack and Commit Solution'
+      steps:
+      - template: ../Templates/commit-solution-template.yml
+          
