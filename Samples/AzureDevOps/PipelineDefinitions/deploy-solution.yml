@@ -11,6 +11,8 @@ resources:
       source: 'CI Build'
 
 stages:
+
+  # Deploy to test environment
   - stage: deployToTEST
     displayName: Deploy to TEST
     jobs:
@@ -27,6 +29,7 @@ stages:
           steps:
           - template: ../Templates/deploy-solution-template.yml
              
+  # Deploy to production environment           
   - stage: deployToPROD
     dependsOn: deployToTEST
     displayName: Deploy to PROD

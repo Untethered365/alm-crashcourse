@@ -16,6 +16,7 @@ stages:
   - stage: buildArtifacts
     displayName: 'Build Artifacts'
     jobs:
+    # Build script artifacts
     - job: buildScripts
       pool:
         vmImage: 'windows-latest'
@@ -37,6 +38,8 @@ stages:
             PathtoPublish: '$(Build.ArtifactStagingDirectory)/Build/Scripts'
             ArtifactName: 'Scripts'
             publishLocation: 'Container'  
+
+    # Build settings artifacts        
     - job: buildSettings
       pool:
         vmImage: 'windows-latest'
@@ -58,6 +61,8 @@ stages:
             PathtoPublish: '$(Build.ArtifactStagingDirectory)/Build/Settings'
             ArtifactName: 'Settings'
             publishLocation: 'Container'
+
+    # Build solutions artifacts        
     - job: buildSolutions
       pool:
         vmImage: 'windows-latest'

@@ -37,6 +37,7 @@ steps:
     name: transformDeploymentSettingsFile
     displayName: Transform Deployment Settings File
 
+  # Import the solution
   - task: PowerPlatformImportSolution@2
     inputs:
       authenticationType: 'PowerPlatformSPN'
