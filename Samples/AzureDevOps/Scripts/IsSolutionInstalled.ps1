@@ -48,7 +48,7 @@ else{
 }
 
 $upgradesolution = Get-DataverseRecord -Connection $connection -TableName "solution" -FilterValues @{uniquename="$upgradeSolutionName"} -Columns $columns
-if ($null -eq $upgradesolutions){
+if ($null -eq $upgradesolution){
     Write-Host "Solution" $upgradeSolutionName "is not installed"
     Write-Host "##vso[task.setvariable variable=currentUpgradeSolutionStatus;]NotInstalled"
 }
