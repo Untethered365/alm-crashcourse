@@ -1,3 +1,11 @@
+parameters:
+  - name: SolutionName
+    type: string
+    default: TaschenCustomizations
+  
+  - name: CommitMessage
+    type: string
+
 steps:
   # Checkout the repository
   - checkout: self
@@ -44,13 +52,13 @@ steps:
     displayName: Set Connection Variables  
 
   # Determine the updated solution version number using our custom script for Main branch. Update paths as required in the following command
-  - pwsh: "$(Build.SourcesDirectory)/Samples/AzureDevOps/Scripts/SyncSolutionVersion.ps1 -serverURL '$(BuildTools.EnvironmentUrl)' -clientId '$(setConnectionVariablesSP.BuildTools.ApplicationId)' -clientSecret '$(setConnectionVariablesSP.BuildTools.ClientSecret)'  -solutionUniqueName '$(SolutionName)' -incrementBuild $true -incrementRevision $false -startingFilePath '$(Build.SourcesDirectory)/Samples/AzureDevOps/Scripts'"
+  - pwsh: "$(Build.SourcesDirectory)/Samples/AzureDevOps/Scripts/SyncSolutionVersion.ps1 -serverURL '$(BuildTools.EnvironmentUrl)' -clientId '$(setConnectionVariablesSP.BuildTools.ApplicationId)' -clientSecret '$(setConnectionVariablesSP.BuildTools.ClientSecret)'  -solutionUniqueName '${{ parameters.SolutionName }}' -incrementBuild $true -incrementRevision $false -startingFilePath '$(Build.SourcesDirectory)/Samples/AzureDevOps/Scripts'"
     condition: eq(variables['Build.SourceBranchName'], 'main')
     name: syncSolutionVersionForMain
     displayName: Sync Solution Version for Main
 
    # Determine the updated solution version number using our custom script for Hotfix branch. Update paths as required in the following command
-  - pwsh: "$(Build.SourcesDirectory)/Samples/AzureDevOps/Scripts/SyncSolutionVersion.ps1 -serverURL '$(BuildTools.EnvironmentUrl)' -clientId '$(setConnectionVariablesSP.BuildTools.ApplicationId)' -clientSecret '$(setConnectionVariablesSP.BuildTools.ClientSecret)'  -solutionUniqueName '$(SolutionName)' -incrementBuild $false -incrementRevision $true -startingFilePath '$(Build.SourcesDirectory)/Samples/AzureDevOps/Scripts'"
+  - pwsh: "$(Build.SourcesDirectory)/Samples/AzureDevOps/Scripts/SyncSolutionVersion.ps1 -serverURL '$(BuildTools.EnvironmentUrl)' -clientId '$(setConnectionVariablesSP.BuildTools.ApplicationId)' -clientSecret '$(setConnectionVariablesSP.BuildTools.ClientSecret)'  -solutionUniqueName '${{ parameters.SolutionName }}' -incrementBuild $false -incrementRevision $true -startingFilePath '$(Build.SourcesDirectory)/Samples/AzureDevOps/Scripts'"
     condition: eq(variables['Build.SourceBranchName'], 'hotfix')
     name: syncSolutionVersionForHotfix
     displayName: Sync Solution Version for Hotfix
@@ -62,7 +70,7 @@ steps:
     inputs:
       authenticationType: 'PowerPlatformSPN'
       PowerPlatformSPN: '$(SPNServiceConnection)'
-      SolutionName: '$(SolutionName)'
+      SolutionName: '${{ parameters.SolutionName }}'
       SolutionVersionNumber: '$(newSolutionVersion)'
 
   # Publish all customisations in the source environment to ensure everything is up to date before exporting    
@@ -84,9 +92,9 @@ steps:
       PowerPlatformSPN: '$(SPNServiceConnection)'
       AsyncOperation: true
       MaxAsyncWaitTime: '60'
-      SolutionName: '$(SolutionName)'
+      SolutionName: '${{ parameters.SolutionName }}'
       Managed: false
-      SolutionOutputFile: '$(Build.ArtifactStagingDirectory)\$(SolutionName).zip'
+      SolutionOutputFile: '$(Build.ArtifactStagingDirectory)\${{ parameters.SolutionName }}.zip'
       OverwriteLocalSolution: true
 
   # Now export the managed solution    
@@ -98,29 +106,29 @@ steps:
       PowerPlatformSPN: '$(SPNServiceConnection)'
       AsyncOperation: true
       MaxAsyncWaitTime: '60'
-      SolutionName: '$(SolutionName)'
+      SolutionName: '${{ parameters.SolutionName }}'
       Managed: true
-      SolutionOutputFile: '$(Build.ArtifactStagingDirectory)\$(SolutionName)_managed.zip'
+      SolutionOutputFile: '$(Build.ArtifactStagingDirectory)\${{ parameters.SolutionName }}_managed.zip'
       OverwriteLocalSolution: true
 
   # Unpack the exported solutions into the source directory         
   - task: PowerPlatformUnpackSolution@2
-    name: unpackSolutionsFirstPass
+    name: unpackSolution
     displayName: Unpack Solution
     inputs:
-      SolutionInputFile: '$(Build.ArtifactStagingDirectory)\$(SolutionName).zip'
-      SolutionTargetFolder: '$(Build.SourcesDirectory)\Samples\AzureDevOps\Solutions\$(SolutionName)' # Update this path as required
+      SolutionInputFile: '$(Build.ArtifactStagingDirectory)\${{ parameters.SolutionName }}.zip'
+      SolutionTargetFolder: '$(Build.SourcesDirectory)\Samples\AzureDevOps\Solutions\${{ parameters.SolutionName }}' # Update this path as required
       SolutionType: 'Both'
       OverwriteFiles: true
   
   # The solution we have just exported and unpacked may contain Environment Variables and Connection References that will need configuring when deploying to other environments.
   # So let's invoke the PAC CLI to generate a settings file that contains these variables and references for later use in deployments.
-  - pwsh: pac solution create-settings --solution-zip "$(Build.ArtifactStagingDirectory)\$(SolutionName).zip" --settings-file "$(Build.SourcesDirectory)\Samples\AzureDevOps\Settings\$(SolutionName).json" # Update this path as required
+  - pwsh: pac solution create-settings --solution-zip "$(Build.ArtifactStagingDirectory)\${{ parameters.SolutionName }}.zip" --settings-file "$(Build.SourcesDirectory)\Samples\AzureDevOps\Settings\${{ parameters.SolutionName }}.json" # Update this path as required
     name: generateDeploymentSettingsFile
     displayName: Generate Deployment Settings File
 
   # Now we need to tokenise the settings file to replace the environment variables and connection references with tokens that can be replaced at deployment time.  
-  - pwsh:  $(Build.SourcesDirectory)\Samples\AzureDevOps\Scripts\TokeniseDeploymentSettingsFile.ps1 -settingsFilePath "$(Build.SourcesDirectory)\Samples\AzureDevOps\Settings\$(SolutionName).json" -environmentVariablesTokens '$(EnvironmentVariableTokens)' -connectionReferencesTokens '$(ConnectionReferenceTokens)'
+  - pwsh:  $(Build.SourcesDirectory)\Samples\AzureDevOps\Scripts\TokeniseDeploymentSettingsFile.ps1 -settingsFilePath "$(Build.SourcesDirectory)\Samples\AzureDevOps\Settings\${{ parameters.SolutionName }}.json" -environmentVariablesTokens '$(EnvironmentVariableTokens)' -connectionReferencesTokens '$(ConnectionReferenceTokens)'
     name: tokeniseDeploymentSettingsFile
     displayName: Tokenise Deployment Settings File
 
@@ -131,5 +139,5 @@ steps:
     inputs:
       script: |
         git add --all --verbose --force
-        git commit -m "$(CommitMessage)"
+        git commit -m "${{ parameters.CommitMessage }}"
         git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin $(Build.SourceBranchName)

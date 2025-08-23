@@ -2,6 +2,15 @@ name: $(Build.DefinitionName) $(Rev:rrrr)
 
 trigger: none
 
+parameters:
+  - name: SolutionName
+    displayName: "Solution Unique Name"
+    type: string
+    
+  - name: CommitMessage
+    displayName: "Commit Message"
+    type: string
+
 variables:
   - group: Generic Variables # This Variable Group will need creating in your Azure DevOps Project under Pipelines > Library. Remember also to grant the pipelines access to the Variable Groups and link them together
     
@@ -21,4 +30,7 @@ stages:
       displayName: 'Export, Unpack and Commit Solution'
       steps:
       - template: ../Templates/commit-solution-template.yml
+        parameters:
+              SolutionName: ${{ parameters.SolutionName }}
+              CommitMessage: ${{ parameters.CommitMessage }}
           

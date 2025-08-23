@@ -40,22 +40,21 @@ $solution = Get-DataverseRecord -Connection $connection -TableName "solution" -F
 
 if ($null -eq $solution){
     Write-Host "Solution" $solutionUniqueName "is not installed"
-    Write-Host "##vso[task.setvariable variable=currentSolutionStatus;isoutput=true]NotInstalled"
-    Write-Host "##vso[task.setvariable variable=DeployAsUpgrade]false"
+    Write-Host "##vso[task.setvariable variable=currentSolutionStatus;]NotInstalled"
 }
 else{
     Write-Host "Solution" $solutionUniqueName "version" $solution.version "is installed"
-    Write-Host "##vso[task.setvariable variable=currentSolutionStatus;isoutput=true]"$solution.version
+    Write-Host "##vso[task.setvariable variable=currentSolutionStatus;]"$solution.version
 }
 
 $upgradesolution = Get-DataverseRecord -Connection $connection -TableName "solution" -FilterValues @{uniquename="$upgradeSolutionName"} -Columns $columns
 if ($null -eq $upgradesolutions){
     Write-Host "Solution" $upgradeSolutionName "is not installed"
-    Write-Host "##vso[task.setvariable variable=currentUpgradeSolutionStatus;isoutput=true]NotInstalled"
+    Write-Host "##vso[task.setvariable variable=currentUpgradeSolutionStatus;]NotInstalled"
 }
 else{
     Write-Host "Solution" $upgradeSolutionName "version" $upgradesolution.version "is installed"
-    Write-Host "##vso[task.setvariable variable=currentUpgradeSolutionStatus;isoutput=true]"$upgradesolution.version
+    Write-Host "##vso[task.setvariable variable=currentUpgradeSolutionStatus;]"$upgradesolution.version
 }
 
 Write-Host "Extracting" $solutionFilePath
@@ -64,4 +63,4 @@ Write-Host "Successfully extracted $solutionFilePath"
 
 [XML] $solutionFileXml = Get-Content $solutionUniqueName\solution.xml
 Write-Host "Attempting to install solution" $solutionUniqueName "version" $solutionFileXml.ImportExportXml.SolutionManifest.Version
-Write-Host "##vso[task.setvariable variable=attemptedSolutionVersion;isoutput=true]"$solutionFileXml.ImportExportXml.SolutionManifest.Version
+Write-Host "##vso[task.setvariable variable=attemptedSolutionVersion;]"$solutionFileXml.ImportExportXml.SolutionManifest.Version

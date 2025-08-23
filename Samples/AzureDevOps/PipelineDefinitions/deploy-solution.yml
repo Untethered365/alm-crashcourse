@@ -2,8 +2,33 @@ name: $(Build.DefinitionName) $(Rev:rrrr)
 
 trigger: none
 
+parameters:
+  - name: SolutionName
+    displayName: "Solution Unique Name"
+    type: string
+
+  - name: SolutionImportMode
+    displayName: "Solution Import Mode"
+    type: string
+    default: Modern Upgrade
+    values:
+    - Modern Upgrade
+    - Legacy Upgrade  
+
+  - name: OverwriteUnmanagedCustomisations
+    displayName: "Overwrite Unmanaged Customisations"
+    type: boolean
+    default: false
+
+  - name: SkipLowerVersion
+    displayName: "Skip Lower Version"
+    type: boolean
+    default: true
+
 variables:
   - group: Generic Variables # This Variable Group will need creating in your Azure DevOps Project under Pipelines > Library. Remember also to grant the pipelines access to the Variable Groups and link them together
+  - name: ImportMode
+    value: ${{ parameters.SolutionImportMode }}
 
 resources:
   pipelines:
@@ -11,14 +36,12 @@ resources:
       source: 'CI Build'
 
 stages:
-
-  # Deploy to test environment
   - stage: deployToTEST
     displayName: Deploy to TEST
     jobs:
     - deployment: deployToTEST
       variables:
-        - group: TEST Environment Variables
+        - group: TEST Environment Variables # This Variable Group will need creating in your Azure DevOps Project under Pipelines > Library. Remember also to grant the pipelines access to the Variable Groups and link them together
       pool:
         vmImage: 'windows-latest'
       displayName: "Deploy to TEST"
@@ -28,15 +51,18 @@ stages:
          deploy:
           steps:
           - template: ../Templates/deploy-solution-template.yml
+            parameters:
+              SolutionName: ${{ parameters.SolutionName }}
+              OverwriteUnmanagedCustomisations: ${{ parameters.OverwriteUnmanagedCustomisations }}
+              SkipLowerVersion: ${{ parameters.SkipLowerVersion }}
              
-  # Deploy to production environment           
   - stage: deployToPROD
     dependsOn: deployToTEST
     displayName: Deploy to PROD
     jobs:
     - deployment: deployToPROD
       variables:
-        - group: PROD Environment Variables
+        - group: PROD Environment Variables # This Variable Group will need creating in your Azure DevOps Project under Pipelines > Library. Remember also to grant the pipelines access to the Variable Groups and link them together
       pool:
         vmImage: 'windows-latest'
       displayName: "Deploy to PROD"
@@ -46,3 +72,7 @@ stages:
          deploy:
           steps:
           - template: ../Templates/deploy-solution-template.yml
+            parameters:
+              SolutionName: ${{ parameters.SolutionName }}
+              OverwriteUnmanagedCustomisations: ${{ parameters.OverwriteUnmanagedCustomisations }}
+              SkipLowerVersion: ${{ parameters.SkipLowerVersion }}
