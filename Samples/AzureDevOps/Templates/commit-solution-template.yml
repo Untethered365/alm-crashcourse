@@ -1,7 +1,7 @@
 parameters:
   - name: SolutionName
     type: string
-    default: TaschenCustomizations
+    default: EnvironmentRetention
   
   - name: CommitMessage
     type: string
