@@ -13,7 +13,8 @@ parameters:
     default: Modern Upgrade
     values:
     - Modern Upgrade
-    - Legacy Upgrade  
+    - Legacy Upgrade
+    - Update 
 
   - name: OverwriteUnmanagedCustomisations
     displayName: "Overwrite Unmanaged Customisations"

@@ -86,6 +86,23 @@ steps:
     name: importSolutionAsHoldingSolution
     displayName: Import Solution ${{ parameters.SolutionName }} as Holding Solution
 
+    # Import the solution as Update
+  - task: PowerPlatformImportSolution@2
+    condition: or(eq(variables['ImportMode'], 'Update'), eq(variables['currentSolutionStatus'], 'NotInstalled'))
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '$(SPNServiceConnection)'
+      SolutionInputFile: '$(Pipeline.Workspace)/CI-Build/Solutions/${{ parameters.SolutionName }}_managed.zip'
+      UseDeploymentSettingsFile: true
+      DeploymentSettingsFile: '$(Pipeline.Workspace)/CI-Build/Settings/${{ parameters.SolutionName }}.json'
+      AsyncOperation: true
+      MaxAsyncWaitTime: '60'
+      OverwriteUnmanagedCustomizations: ${{ parameters.OverwriteUnmanagedCustomisations }}
+      SkipLowerVersion: ${{ parameters.SkipLowerVersion }}
+      PublishWorkflows: true
+    name: importSolutionAsUpdate
+    displayName: Import Solution ${{ parameters.SolutionName }} as Update  
+    
   # Check if the upgrade solution was installed, and if so, what version    
   - pwsh: "$(Pipeline.Workspace)/CI-Build/Scripts/IsSolutionInstalled.ps1 -serverURL '$(BuildTools.EnvironmentUrl)' -clientId '$(setConnectionVariablesSP.BuildTools.ApplicationId)' -clientSecret '$(setConnectionVariablesSP.BuildTools.ClientSecret)'  -solutionUniqueName '${{ parameters.SolutionName }}' -solutionFilePath '$(Pipeline.Workspace)/CI-Build/Solutions/${{ parameters.SolutionName }}_managed.zip'"
     name: checkSolutionImportOutcome
