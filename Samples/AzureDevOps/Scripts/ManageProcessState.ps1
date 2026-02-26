@@ -1,4 +1,5 @@
-# Changes the status of different types of processes in a Dynamics 365 / Power Platform environment within a specified solution.
+# Changes the status of different types of processes in a Dynamics 365 / Power Platform environment 
+# within a specified solution.
 param(
   [Parameter(Mandatory=$true)] $serverURL,
   [Parameter(Mandatory=$false)] $username,

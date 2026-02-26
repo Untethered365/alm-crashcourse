@@ -1,0 +1,5 @@
+# Ignore service connection creation script
+create-service-connection.ps1
+
+# Ignore variable group creation script
+create-variable-group.ps1

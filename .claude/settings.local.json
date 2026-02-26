@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\Test\\\\Desktop\\\\repo\\\\alm workshop\\\\Samples\\\\AzureDevOps\\\\PipelineDefinitions\\\\create-service-connection.ps1\")",
+      "Bash(/tmp/test-body.ps1:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}
