@@ -66,12 +66,6 @@ Write-Host "Retrieving current version of" $solutionUniqueName "solution"
 $columns = "solutionid", "uniquename", "friendlyname", "version" 
 $solution = Get-DataverseRecord -Connection $connection -TableName "solution" -FilterValues @{uniquename="$solutionUniqueName"} -Columns $columns
 
-$nullOrEmpty = $null -eq $solution -or ($solution -is [System.Array] -and $solution.Count -eq 0)
-if ($nullOrEmpty) {
-    Write-Host "Solution '$solutionUniqueName' does not exist in the target environment."
-    exit 1
-}
-
 $solutionRecord = $solution
 $currentVersion = $solutionRecord.version
 
